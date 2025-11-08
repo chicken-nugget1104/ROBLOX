@@ -14,23 +14,30 @@ const char* const  sPrism = "PrismPart";
 using namespace Reflection;
 
 const char* category_Prism = "Part ";
-const EnumPropDescriptor<PrismInstance, PrismInstance::NumSidesEnum> PrismInstance::prop_sidesXML("sides", category_Prism, &PrismInstance::GetNumSides, &PrismInstance::SetNumSides, PropertyDescriptor::STREAMING);
-static const EnumPropDescriptor<PrismInstance, PrismInstance::NumSidesEnum> prop_sidesUI("Sides", category_Prism, &PrismInstance::GetNumSides, &PrismInstance::SetNumSides, PropertyDescriptor::UI);
+const EnumPropDescriptor<PrismInstance, PrismInstance::NumSidesEnum> PrismInstance::prop_sidesXML(
+    "sides", category_Prism, &PrismInstance::GetNumSides, &PrismInstance::SetNumSides, PropertyDescriptor::STREAMING);
+static const EnumPropDescriptor<PrismInstance, PrismInstance::NumSidesEnum> prop_sidesUI(
+    "Sides", category_Prism, &PrismInstance::GetNumSides, &PrismInstance::SetNumSides, PropertyDescriptor::UI);
 
 static const Vector3 InitialPrismPartSize = Vector3(4.0, 2.0, 4.0);
 
 // Disable slice control for now.
-//const PropDescriptor<PrismInstance, int> PrismInstance::prop_slices("Slices", category_Prism, &PrismInstance::GetNumSlices, &PrismInstance::SetNumSlices);
+// const PropDescriptor<PrismInstance, int> PrismInstance::prop_slices("Slices", category_Prism, &PrismInstance::GetNumSlices, &PrismInstance::SetNumSlices);
 
-
-PrismInstance::PrismInstance() : DescribedNonCreatable<PrismInstance, PartInstance, sPrism>(InitialPrismPartSize)
+//////////////////////////////////////////////////////////
+// Constructor in PointLight-style creatable format
+PrismInstance::PrismInstance()
+    : DescribedCreatable<PrismInstance, PartInstance, sPrism>("Prism")
+    , numSides(sides6)   // default number of sides
+    , numSlices(1)       // default number of slices
 {
-	setName("Prism");
-	Primitive* myPrim = this->getPartPrimitive();
-	myPrim->setGeometryType(Geometry::GEOMETRY_PRISM);
-	myPrim->setGeometryParameter("NumSides", 8);
-	myPrim->setGeometryParameter("NumSlices", 8);
+    setName("Prism");
+    Primitive* myPrim = this->getPartPrimitive();
+    myPrim->setGeometryType(Geometry::GEOMETRY_PRISM);
+    myPrim->setGeometryParameter("NumSides", static_cast<int>(numSides));
+    myPrim->setGeometryParameter("NumSlices", numSlices);
 }
+//////////////////////////////////////////////////////////
 
 PrismInstance::~PrismInstance()
 {
@@ -38,59 +45,54 @@ PrismInstance::~PrismInstance()
 
 PrismInstance::NumSidesEnum PrismInstance::GetNumSides() const
 {
-	int num = getConstPartPrimitive()->getGeometryParameter("NumSides");
-	return static_cast<NumSidesEnum>(num);
+    int num = getConstPartPrimitive()->getGeometryParameter("NumSides");
+    return static_cast<NumSidesEnum>(num);
 }
 
 int PrismInstance::GetNumSlices() const
 {
-	return getConstPartPrimitive()->getGeometryParameter("NumSides");
+    return getConstPartPrimitive()->getGeometryParameter("NumSlices");
 }
 
-
-// This is identical to Pyramid - should descend from same object.....
-//
 void PrismInstance::SetNumSides(PrismInstance::NumSidesEnum num)
 {
-	// disable slices control from UI.  set slices = sides
-	int NumSides = num; 
-	raisePropertyChanged(prop_sidesXML); 
-	raisePropertyChanged(prop_sidesUI); 
+    int NumSides = num; 
+    raisePropertyChanged(prop_sidesXML); 
+    raisePropertyChanged(prop_sidesUI); 
 
-	getPartPrimitive()->setGeometryParameter("NumSides", NumSides);
-	getPartPrimitive()->setGeometryParameter("NumSlices", NumSides);
+    getPartPrimitive()->setGeometryParameter("NumSides", NumSides);
+    getPartPrimitive()->setGeometryParameter("NumSlices", NumSides);
 
-	shouldRenderSetDirty();
+    shouldRenderSetDirty();
 }
 
 void PrismInstance::SetNumSlices(int num)
 {
-	getPartPrimitive()->setGeometryParameter("NumSlices", num);
+    getPartPrimitive()->setGeometryParameter("NumSlices", num);
 
-	shouldRenderSetDirty();
+    shouldRenderSetDirty();
 }
-
 
 void PrismInstance::setPartSizeXml(const Vector3& rbxSize)
 {
-	Vector3 newSize = rbxSize;
-	Vector3 currentSize = getPartSizeXml();
+    Vector3 newSize = rbxSize;
+    Vector3 currentSize = getPartSizeXml();
 
-	if( rbxSize.x != currentSize.x )
-		newSize.x = newSize.z = rbxSize.x;
-	else if( rbxSize.z != currentSize.z )
-		newSize.z = newSize.x = rbxSize.z;
+    if( rbxSize.x != currentSize.x )
+        newSize.x = newSize.z = rbxSize.x;
+    else if( rbxSize.z != currentSize.z )
+        newSize.z = newSize.x = rbxSize.z;
 
-	if(newSize != getPartSizeXml())
-	{
-		Super::setPartSizeXml(newSize);
-	}
-	else
-	{
-		refreshPartSizeUi();
-	}
+    if(newSize != getPartSizeXml())
+    {
+        Super::setPartSizeXml(newSize);
+    }
+    else
+    {
+        refreshPartSizeUi();
+    }
 }
 
-}//namespace
+} // namespace
 
 #endif // _PRISM_PYRAMID_
